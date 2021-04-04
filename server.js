@@ -25,8 +25,8 @@ server.get('/location', (req, res) => {
 
 function Location (getData)
 {
-  this.searchQuery = 'Lynwood';
-  this.formattedQuery = getData[0].display_name;
+  this.search_query = 'Lynwood';
+  this.formatted_query = getData[0].display_name;
   this.latitude = getData[0].lat;
   this.longitude = getData[0].lon;
 }
@@ -51,7 +51,6 @@ function Weathers (weatherData)
 }
 
 server.get('*',(req,res)=>{
-  res.status(404).send('wrong route');
   {
     let errObj = {
       status: 500,
