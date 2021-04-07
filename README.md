@@ -71,6 +71,7 @@ nodemon ,
 install superagent 
 clear
 
+
 ## Change Log
 5-4-2021 6:00pm - Application now has a fully-functional express server, with a GET route for the location resource.
 
