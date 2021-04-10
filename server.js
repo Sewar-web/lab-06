@@ -12,15 +12,20 @@ const cors = require('cors');
 const pg = require('pg');
 const server = express();
 const superagent = require('superagent');
+const { request } = require('express');
 const PORT = process.env.PORT || 2000;
 // const client = new pg.Client(process.env.DATABASE_URL);
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL,ssl: { rejectUnauthorized: false } });
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL,
+  // ssl:{ rejectUnauthorized: false }
+});
 server.use(cors());
 
 ////////////////////////////////////////////////////////////////////
 
 server.get('/', handledRouter);
 server.get('/location', handledLocation);
+server.get('/movies', handledMovies);
+server.get('/yelp', handledYelp);
 server.get('/weather', handledWeather);
 server.get('/Parks', handledParks);
 server.get('*', handledError);
@@ -78,10 +83,47 @@ function handledLocation(req, res) {
 
 
 
+function handledMovies(req, res) {
 
 
+  let key = process.env.MOVIES_KEY;
+  let moviesURl = `https://api.themoviedb.org/3/trending/movie/day?api_key=${key}`;
 
+  superagent.get(moviesURl)
+    .then(getData => {
+      // console.log(getData.body);
+      let newArr = getData.body.results.map(element => {
+        // console.log(element);
+        return new Movies(element);
+      });
+      res.send(newArr);
+      // console.log(newArr);
+    }
+    );
+}
 
+let page=1;
+function handledYelp(req ,res) {
+
+  let city=req.query.search_query;
+  const numPerPage = 5;
+  let start = ((page - 1) * numPerPage + 1);
+  let key = process.env.YELP_KEY;
+  let yelpURL = `https://api.yelp.com/v3/businesses/search?location=${city}&limit=${numPerPage}&offset=${start};`;
+
+  superagent.get(yelpURL).set('Authorization' ,`Bearer ${key}`)
+    .then(getData => {
+      console.log(getData.body);
+      let newArr = getData.body.businesses.map(element => {
+        // console.log(element);
+        return new Yelp(element);
+      });
+      res.send(newArr);
+      // console.log(newArr);
+    }
+    );
+  page++;
+}
 
 function handledWeather(req, res) {
 
@@ -140,6 +182,29 @@ function Location(cityName, getData) {
   this.latitude = getData[0].lat;
   this.longitude = getData[0].lon;
 }
+
+function Movies (moviesData)
+{
+  this.title =moviesData.title;
+  this.overview=moviesData.overview;
+  this.average_votes=moviesData.vote_average;
+  this.total_votes=moviesData.total_votes;
+  this.image_url=`https://image.tmdb.org/t/p/w500${moviesData.poster_path}`;
+  this.popularity=moviesData.popularity;
+  this.released_on=moviesData.release_date;
+}
+
+function Yelp (yelpData)
+{
+  this.name =yelpData.name;
+  this.image_url=yelpData.image_url;
+  this.price=yelpData.price;
+  this.rating=yelpData.rating;
+  this.page=yelpData.pages;
+}
+
+
+
 function Weathers(weatherData) {
 
   this.forecast = weatherData.weather.description;
